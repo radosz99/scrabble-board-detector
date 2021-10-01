@@ -1,4 +1,6 @@
-from project.training import recognize_letters_from_image
+from project import training_utils
+from project.letter_detector import recognize_letters_from_image
+from project.training_utils import resize_image
 from fastapi import FastAPI, File, UploadFile
 import os
 
@@ -15,12 +17,8 @@ async def image(image: UploadFile = File(...)):
     with open(file_name,'wb+') as f:
         f.write(image.file.read())
         f.close()
+    resize_image(divider=4, img_file_name=file_name, new_file_name=file_name)
     board = recognize_letters_from_image(img_path=file_name, clf_file_name=CLASSIFIER_PATH)
     new_board = [row.tolist() for row in board]
     return {"board": new_board}
 
-
-# training.collect_samples_from_boards('training')
-# clf = training.get_trained_classifier('training')
-# training.save_classifier_to_file(clf)
-# training.resize_image(divider=4, img_file_name=IMG_FILE_NAME)

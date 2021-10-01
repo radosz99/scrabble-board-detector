@@ -4,6 +4,10 @@ import numpy as np
 import copy
 import logging
 from operator import itemgetter
+import pickle
+
+import training_utils
+import board_detector
 
 MIN_CONT_HEIGHT = 53
 MAX_CONT_HEIGHT = 70
@@ -16,8 +20,68 @@ MIN_CONT_AMOUNT = 3
 MAX_CONT_AMOUNT = 80
 FINAL_SQUARE_SIZE = 12
 BOARD_SIZE = 15
+FRAME_PROPORTION_MIN = 0.75
+FRAME_SIZE = 5
+MIN_LETTER_PROBA = 0.35
 
 logging.basicConfig(filename='demo.log', level=logging.DEBUG)
+
+def recognize_letters_from_image(img_path, clf_file_name, output_directory='output'):
+    prepare_output_workspace_for_detecting(output_directory)
+    clf = get_classifier_from_file(clf_file_name)
+    save_detected_board_in_file(img_path, f"{output_directory}/cropped.png")
+    divide_board_in_cells(f"{output_directory}/cropped.png", f"{output_directory}/cells")
+    leave_only_cells_with_contours_similar_to_letter(f"{output_directory}/cells", f"{output_directory}/cleared")
+
+    predicted, prob_predicted, letters_file_names = predict_letters(clf, f"{output_directory}/cleared")
+    board_array = get_filled_board_based_on_predicted_letters(predicted, prob_predicted, letters_file_names, clf.classes_)
+    return board_array
+
+
+def get_filled_board_based_on_predicted_letters(predicted, prob_predicted, letters_file_names, classes):
+    board_array = init_array_for_board()
+    for i, letter_file_name in enumerate(letters_file_names):
+        coord_x, coord_y = get_coordinates_on_board_from_file_name(letter_file_name)
+        logging.info(f"{coord_x}_{coord_y}, prob - {list(zip(classes, prob_predicted[i]))}, pred - {predicted[i]}")
+        put_letter_on_board_if_valid(max(prob_predicted[i]), predicted[i], coord_x, coord_y, board_array)
+    return board_array
+
+
+def init_array_for_board():
+    return np.full((BOARD_SIZE, BOARD_SIZE), ' ')
+
+
+def prepare_output_workspace_for_detecting(output_directory):
+    training_utils.create_directories_if_not_exists([output_directory, f"{output_directory}/cells", f"{output_directory}/cleared"])
+
+
+def put_letter_on_board_if_valid(proba, predicted_letter, coord_x, coord_y, board_array):
+    if(proba >= MIN_LETTER_PROBA):
+            board_array[coord_x, coord_y] = predicted_letter
+
+
+def get_coordinates_on_board_from_file_name(file_name):
+    coords = file_name[:-4].split('_')  # 11_0.png -> [11, 0]
+    return int(coords[0]), int(coords[1])
+
+
+def predict_letters(clf, letter_data_dir):
+    letters, letters_file_names = training_utils.get_letter_data_from_directory(letter_data_dir)
+    letters = np.array(letters)
+    data = letters.reshape((len(letters), -1))
+
+    prob_predicted = [[round(prob, 3) for prob in letter] for letter in clf.predict_proba(data)]
+    predicted = clf.predict(data)
+    return predicted, prob_predicted, letters_file_names
+
+
+def save_detected_board_in_file(img_path, filename):
+    cv2.imwrite(filename, board_detector.get_board_from_image(ref_img_path="resources/board_empty.jpg", board_img_path=f"{img_path}"))
+
+
+def get_classifier_from_file(clf_file_name):
+    return pickle.load(open(clf_file_name, 'rb'))
+
 
 def get_corners_coordinates(contours):  # first width second height
     width_start, width_end, height_start, height_end = 999, 0, 999, 0
@@ -33,11 +97,13 @@ def get_corners_coordinates(contours):  # first width second height
             height_end = coord_x
     return (width_start, width_end, height_start, height_end)
 
+
 def check_if_letter_coordinates(height, width):
     if(height > MIN_CONT_HEIGHT and height < MAX_CONT_HEIGHT and width > MIN_CONT_WIDTH and width < MAX_CONT_WIDTH):
         return True
     else:
         return False
+
 
 def get_height_coordinates(start_height, end_height, img_height):
     if(start_height < 0):
@@ -48,6 +114,7 @@ def get_height_coordinates(start_height, end_height, img_height):
         end_height = img_height
     return start_height, end_height
 
+
 def get_width_coordinates(start_width, end_width, img_width):
     if(start_width < 0):
         end_width = end_width - start_width
@@ -56,6 +123,7 @@ def get_width_coordinates(start_width, end_width, img_width):
         start_width = start_width - (end_width - img_width)
         end_width = img_width
     return start_width, end_width
+
 
 def get_coordinates_of_square_with_letter_inside(corners_coordinates, img_height, img_width):
     height, width = get_contour_dimensions(corners_coordinates)
@@ -73,34 +141,41 @@ def get_coordinates_of_square_with_letter_inside(corners_coordinates, img_height
     start_width, end_width = get_width_coordinates(start_width, end_width, img_width)
     return start_height, end_height, start_width, end_width
 
+
 def check_if_valid_amount_of_contours(amount):
     if(amount > MAX_CONT_AMOUNT or amount < MIN_CONT_AMOUNT):
         return False
     else:
         return True
 
+
 def get_image_dimensions(img):
     img_height, img_width, _ = img.shape
     return img_height, img_width
+
 
 def find_contours_in_img(img):
     edged = cv2.Canny(img, CANNY_THRESHOLD_1, CANNY_THRESHOLD_2)
     contours, _ = cv2.findContours(edged, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
     return contours
 
+
 def get_contour_dimensions(coordinates):
     height = coordinates[3] - coordinates[2]
     width = coordinates[1] - coordinates[0]
     return height, width
+
 
 def get_contour_parameters(contour):
     corners_coordinates = get_corners_coordinates(contour)
     height, width = get_contour_dimensions(corners_coordinates)
     return corners_coordinates, height, width
 
+
 def get_best_contour_dimensions(contours_list):
-    contours_list.sort(key=itemgetter(2),reverse=True)
+    contours_list.sort(key=itemgetter(2),reverse=True)  # sort by width from largest
     return contours_list[0][0], contours_list[0][1], contours_list[0][2]
+
 
 def get_valid_contours(contours):
     probably_valid_contours = []
@@ -110,6 +185,7 @@ def get_valid_contours(contours):
             probably_valid_contours.append((corners_coordinates, height, width))
     return probably_valid_contours
 
+
 def put_letter_in_square(corners_coordinates, img):
     img_height, img_width = get_image_dimensions(img) 
     start_height, end_height, start_width, end_width = get_coordinates_of_square_with_letter_inside(corners_coordinates, img_height, img_width)
@@ -117,7 +193,8 @@ def put_letter_in_square(corners_coordinates, img):
     cropped_image = cv2.resize(cropped_image, dsize=(FINAL_SQUARE_SIZE, FINAL_SQUARE_SIZE), interpolation=cv2.INTER_CUBIC)  # crop to square 12x12
     return cropped_image
 
-def clear_cells(cells_directory, destination_directory):
+
+def leave_only_cells_with_contours_similar_to_letter(cells_directory, destination_directory):
     images_to_check = os.listdir(cells_directory)
     logging.info(f"Znaleziono {len(images_to_check)} plików z potencjalnymi literami - {images_to_check}")
     for image_name in images_to_check:
@@ -130,8 +207,8 @@ def clear_cells(cells_directory, destination_directory):
         if(not check_if_valid_amount_of_contours(len(contours))):
             if(len(contours)==1):
                 corners_coordinates, height, width = get_contour_parameters(contours[0])
-                if(height > int(3/4*img_height) and width > int(3/4*img_width)):  # contour as frame, not possible to detect contours inside
-                    cropped_image = img[0:img_height - 5, 0:img_width - 5]  # remove frame
+                if(height > int(FRAME_PROPORTION_MIN*img_height) and width > int(FRAME_PROPORTION_MIN*img_width)):  # contour as frame, not possible to detect contours inside
+                    cropped_image = img[0:img_height - FRAME_SIZE, 0:img_width - FRAME_SIZE]  # remove frame
                     contours = find_contours_in_img(cropped_image)
                 else:
                     continue
@@ -146,13 +223,15 @@ def clear_cells(cells_directory, destination_directory):
             cropped_image = put_letter_in_square(corners_coordinates, img)
             cv2.imwrite(f"{destination_directory}/{image_name}", cropped_image)
 
-def check_if_cell_used(cell_img):
+
+def check_if_cell_is_used(cell_img):
     copy_img = copy.deepcopy(cell_img)
     avg = np.average(copy_img[20])  # random row
     if(avg > 70):  # black - 0, white - 255 ,try to avoid most black cause not used
         return True
     else:
         return False
+
 
 def divide_board_in_cells(board_filename, destination):
     img = cv2.imread(board_filename)
@@ -167,8 +246,9 @@ def divide_board_in_cells(board_filename, destination):
     for multiplier_x in range(BOARD_SIZE):
         for multiplier_y in range(BOARD_SIZE):
             crop_img = img[multiplier_x * mini:(multiplier_x + 1) * mini, multiplier_y * mini :(multiplier_y + 1) * mini].copy()
-            if(check_if_cell_used(crop_img)):
+            if(check_if_cell_is_used(crop_img)):
                 cv2.imwrite(f"{destination}/{multiplier_x}_{multiplier_y}.png", crop_img)
+
 
 def show_contours(img_path):
     img = cv2.imread(img_path)
@@ -181,3 +261,4 @@ def show_contours(img_path):
     cv2.imshow('Contours', img)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
+

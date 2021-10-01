@@ -20,6 +20,7 @@ def test_e2e():
     assert 'board' in response
     board = response['board']
     assert board
+    print(board)
     json_body = {"letters": letters, "board": board}
     response = requests.post(url=f"{CHEATER_SERVER_URL}/best-move/GB", json=json_body)
     assert response.status_code == 200
