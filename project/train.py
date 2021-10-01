@@ -18,11 +18,16 @@ def collect_samples_from_boards(dir_path):
 def recognize_letters_from_image():
     training_utils.resize_image(2, 'resources/tests/test.jpg', IMG_FILE_NAME)  # for faster calculations
     board = letter_detector.recognize_letters_from_image(img_path=IMG_FILE_NAME, clf_file_name=CLASSIFIER_PATH)
+    print()
     print(board)
 
+# training
 # collect_samples_from_boards(TRAINING_WORKSPACE_DIR)
-clf = training_utils.get_trained_classifier(TRAINING_WORKSPACE_DIR)
-training_utils.save_classifier_to_file(clf, CLASSIFIER_PATH)
+# clf = training_utils.get_trained_classifier(TRAINING_WORKSPACE_DIR)
+# training_utils.save_classifier_to_file(clf, CLASSIFIER_PATH)
+
+# recognizing
+recognize_letters_from_image()
 
 
 
