@@ -141,16 +141,28 @@ It is basically all, last thing is run script `project/train.py` by:
 ```
 $ python project/test.py
 ```
-Calling `collect_samples_from_boards(TRAINING_WORKSPACE_DIR)` (`TRAINING_WORKSPACE_DIR` by default is `training`) from that script will:
+Calling `collect_samples_from_boards(TRAINING_WORKSPACE_DIR)` (`TRAINING_WORKSPACE_DIR` by default is `training`) from that script will prepare data for training:
  1. Goes through every directory in `TRAINING_WORKSPACE_DIR` and cut board from every image in letter directories and placed cutted boards in `TRAINING_WORKSPACE_DIR/{letter}/cropped_boards`, for example cutted board from `TRAINING_WORKSPACE_DIR/{letter}/{file_name}` will be saved as `TRAINING_WORKSPACE_DIR/{letter}/cropped_boards/{file_name}_cropped.png`. Function `training_utils.get_boards_from_images`
  2. In each directory in `TRAINING_WORKSPACE_DIR/{letter}/cropped_boards` directories where cells will be placed are created. For example `TRAINING_WORKSPACE_DIR/{letter}/cropped_boards/{file_name}_cropped_cells`
  3. All valid cells from each image are being saved to appropriate directory. Filename clearly indicates coordinates of the cell. Function `training_utils.divide_boards_in_cells`
  4. In each directory in format `TRAINING_WORKSPACE_DIR/{letter}/cropped_boards/{file_name}_cropped_cells` directories where valid contours that can be considered as a letter will be placed are created. For example `TRAINING_WORKSPACE_DIR/{letter}/cropped_boards/{file_name}_cropped_cells/cleared`.
  5. Then calling function `training_utils.leave_only_cells_probably_with_letter` will collect new cells in created directories.
- 6. Finally function `training_utils.collect_letters_to_one_directory` will look for `cleared` directories in each letter directory and collect all letter samples to one directory
+ 6. Finally function `training_utils.collect_letters_to_one_directory` will look for `cleared` directories in each letter directory and collect all letter samples to one directory:
+ <p align="center">
+  <img src="https://github.com/radosz99/scrabble-board-detector/blob/main/images/samples.png" width=80% alt="Img"/> 
+</p> 
+
+Calling `training_utils.get_trained_classifier(TRAINING_WORKSPACE_DIR)` will make a classifier based on prepared data:
+ 1. First it will collect data from all `samples` directories and reformat it appropriate to **Convolutional Neural Network**. All samples are now stored as 12x12 pixels image.
+ 2. Each sample is being converted to 4-bit grayscale (function `convert_image_to_4_bit_array`) and stored in vector 1x144 and each sample is putted to samples vector, so finally vector Ax1x144 is created where A is number of samples. Also vector with target (letters corresponding to vector at the same index) is being created with size Ax1.
+ 3. Then classifier is being initiated, train data is being generated and classifier is being tested (`TEST_SIZE` by default is 0.5, more is recomended):
+ ```
+ clf = svm.SVC(gamma=0.001, probability=True)
+ X_train, _, y_train, _ = train_test_split(data, target, test_size=TEST_SIZE, shuffle=True)
+ clf.fit(X_train, y_train)
+ ```
+ 4. Next it can be saved in file using `training_utils.save_classifier_to_file`.
  
-# CNN-SVM classifier for recognizing letter
-All things are done in function `get_trained_classifier` from `project/training_utils.py`, samples are generated and training is done by sklearn function - `train_test_split`
-
-
+ 
 # How to recognize letters in image?
+Calling `recognize_letters_from_image` from `project/train.py`
