@@ -50,6 +50,95 @@ From the root folder:
 ```
 $ uvicorn project.main:app --reload
 ```
-# Detail info
+# Principle
+## Image with board in it
+To detect something firstly is required to have an image with board (all edges required) in it:
+<p align="center">
+  <img src="https://github.com/radosz99/scrabble-board-detector/blob/main/images/test.jpg" width=40% alt="Img"/> 
+</p> 
 
-## Detecting board on image
+## Board detection in image
+Then function `align_images` from `project/board_detector.py` firstly cutting out board from the image using some OpenCV stuff(`BRISK_create`, `detectAndCompute`, `DescriptorMatcher_create`, `findHomography`, `warpPerspective`) to this form:
+<p align="center">
+  <img src="https://github.com/radosz99/scrabble-board-detector/blob/main/images/board.png" width=40% alt="Img"/> 
+</p> 
+
+Secondly board is being thresholded using OpenCV `threshold` method to facilitate later analysis and also right board is extracted from board using manually calculated proportions:
+```
+BOARD_LEFT_UP_CORNER_HEIGHT = 0.048575
+BOARD_RIGHT_DOWN_CORNER_HEIGHT = 0.949556
+BOARD_LEFT_UP_CORNER_WIDTH = 0.081336
+BOARD_RIGHT_DOWN_CORNER_WIDTH = 0.916524
+```
+
+<p align="center">
+  <img src="https://github.com/radosz99/scrabble-board-detector/blob/main/images/board_after_threshold.png" width=40% alt="Img"/> 
+</p> 
+
+## Getting cells from the board
+Then using function `divide_board_in_cells` from `project/letter_detector.py` board is divided in cells (15x15) which are saved to the files if they are 'white enough' which means if `check_if_cell_is_used` function returns `True`. That function checks average of pixels value in some random row and if it is too black it return False and cell is considered as not used. 'White enough' cells are saved to chosen directory like this with their coordinates in filename:
+<p align="center">
+  <img src="https://github.com/radosz99/scrabble-board-detector/blob/main/images/cells.png" width=85% alt="Img"/> 
+</p> 
+
+## Extracting letters from cells
+Next stage relies on finding contours in cells that can be considered as letters. With function `leave_only_cells_with_contours_similar_to_letter` from `project/letter_detector.py` first all contours are extracted using OpenCV `findContours` method, then amount of this contours is checked (`check_if_valid_amount_of_contours`) and valid contour is resized and saved to file which name is the same as name of the file with cell from which contour is:
+<p align="center">
+  <img src="https://github.com/radosz99/scrabble-board-detector/blob/main/images/cleared_cells.png" width=85% alt="Img"/> 
+</p> 
+
+## Few words about training classifier
+For classifier training was created script `train.py`. Training is nearly fully automated so the only thing that user must do is to take photos for every letter putted on board in many configurations. Photos should be placed in appropriate directories for every letter. Suppose that we created directory `training` in root directory for training workspace and inside it directory for every letter in alphabet. So project structure now should look like this:
+```
+scrabble-board-detector/
+|
+|── training/
+|   |── a/
+|   |── b/
+|   |── c/
+|   |── ...
+|   |── y/
+|   |── z/
+|
+|── classifiers/
+|── images/
+|── project/
+|── tests/
+|── resources/
+|
+```
+Under each of 'letter directory' there should be images with board in it and board should contain only tiles with this letter, no matter how many, there can be all possible tiles with that letter. Filenames of images with board might in any convention (or no convention):
+```
+scrabble-board-detector/
+|
+|── training/
+|   |── a/
+|      |── board1.png
+|      |── ...
+|      |── board2.png
+|   |── b/
+|      |── 814814.jpg
+|      |── ...
+|      |── 82899949.png
+|   |── ...
+|   |── y/
+|      |── brd.png
+|      |── ...
+|      |── brd0.png
+|   |── z/
+|      |── brd_with_z_1.png
+|      |── ...
+|      |── brd_with_z_67.png
+|
+|── classifiers/
+|── images/
+|── project/
+|── tests/
+|── resources/
+|
+```
+# CNN-SVM classifier for recognizing letter
+All things are done in function `get_trained_classifier` from `project/training_utils.py`, samples are generated and training is done by sklearn function - `train_test_split`
+
+
+# How to recognize letters in image?
