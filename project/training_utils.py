@@ -70,15 +70,15 @@ def get_boards_from_images(dir_path, dest_dir_path):
         if(os.path.isfile(f"{dir_path}/{file_name}")):
             logging.info(f"{dir_path}/{file_name}")
             board = board_detector.get_board_from_image(ref_img_path="resources/board_empty.jpg", board_img_path=f"{dir_path}/{file_name}")
-            cv2.imwrite(f"{dest_dir_path}/{file_name}_cropped.png", board)
+            cv2.imwrite(f"{dest_dir_path}/{file_name[:-4]}_cropped.png", board)
 
 def divide_boards_in_cells(boards_directory):
     files_to_check = os.listdir(boards_directory)
     for file_name in files_to_check:
         if(os.path.isfile(f"{boards_directory}/{file_name}")):
             logging.info(f"{boards_directory}/{file_name}")
-            create_directory_if_not_exists(f"{boards_directory}/{file_name}_cells")
-            letter_detector.divide_board_in_cells(f"{boards_directory}/{file_name}", f"{boards_directory}/{file_name}_cells") 
+            create_directory_if_not_exists(f"{boards_directory}/{file_name[:-4]}_cells")
+            letter_detector.divide_board_in_cells(f"{boards_directory}/{file_name}", f"{boards_directory}/{file_name[:-4]}_cells") 
 
 def leave_only_cells_probably_with_letter(cells_directory):
     files_to_check = os.listdir(cells_directory)
