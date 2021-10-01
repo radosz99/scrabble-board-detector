@@ -1,5 +1,10 @@
 # General info
 RPC API created using FastAPI for detecting letters based on image with scrabble board in it.
+In|  Out
+:-------------------------:|:-------------------------:
+<img src="https://github.com/radosz99/scrabble-board-detector/blob/main/images/test.jpg" width=50% alt="Img"/>   |  <img src="https://github.com/radosz99/scrabble-board-detector/blob/main/images/output.png" width=100% alt="Img"/>
+
+
 
 # Endpoints
 <a name="best"></a>
