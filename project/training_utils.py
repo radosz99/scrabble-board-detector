@@ -52,8 +52,8 @@ def resize_image(divider, img_file_name, new_file_name):
     resized_image = image.resize((int(height/divider),int(width/divider)))
     resized_image.save(new_file_name)
 
-def save_classifier_to_file(clf_file_name):
-    pickle.dump(get_trained_classifier('training'), open(clf_file_name, 'wb'))
+def save_classifier_to_file(clf, clf_file_name):
+    pickle.dump(clf, open(clf_file_name, 'wb'))
 
 def create_directory_if_not_exists(directory_path):
     if(not os.path.exists(directory_path)):
@@ -69,7 +69,7 @@ def get_boards_from_images(dir_path, dest_dir_path):
     for file_name in files_to_check:
         if(os.path.isfile(f"{dir_path}/{file_name}")):
             logging.info(f"{dir_path}/{file_name}")
-            board = board_detector.get_board_from_image(ref_img="resources/board_empty.jpg", board_img=f"{dir_path}/{file_name}")
+            board = board_detector.get_board_from_image(ref_img_path="resources/board_empty.jpg", board_img_path=f"{dir_path}/{file_name}")
             cv2.imwrite(f"{dest_dir_path}/{file_name}_cropped.png", board)
 
 def divide_boards_in_cells(boards_directory):

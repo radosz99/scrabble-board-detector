@@ -187,7 +187,7 @@ def get_valid_contours(contours):
 
 
 def put_letter_in_square(corners_coordinates, img):
-    img_height, img_width = get_image_dimensions(img) 
+    img_height, img_width = get_image_dimensions(img)
     start_height, end_height, start_width, end_width = get_coordinates_of_square_with_letter_inside(corners_coordinates, img_height, img_width)
     cropped_image = img[start_height:end_height, start_width:end_width]  # crop to square
     cropped_image = cv2.resize(cropped_image, dsize=(FINAL_SQUARE_SIZE, FINAL_SQUARE_SIZE), interpolation=cv2.INTER_CUBIC)  # crop to square 12x12
@@ -206,31 +206,34 @@ def leave_only_cells_with_contours_similar_to_letter(cells_directory, destinatio
         logging.info(f"Konturów łącznie w {image_name} - {len(contours)}")
         if(not check_if_valid_amount_of_contours(len(contours))):
             if(len(contours)==1):
-                corners_coordinates, height, width = get_contour_parameters(contours[0])
-                if(height > int(FRAME_PROPORTION_MIN*img_height) and width > int(FRAME_PROPORTION_MIN*img_width)):  # contour as frame, not possible to detect contours inside
-                    cropped_image = img[0:img_height - FRAME_SIZE, 0:img_width - FRAME_SIZE]  # remove frame
-                    contours = find_contours_in_img(cropped_image)
-                else:
-                    continue
+                _, height, width = get_contour_parameters(contours[0])
+                distract_letter_from_image_where_only_one_contour_is_frame(height, width, img_height, img_width, img)
             else:
                 continue
                 
         probably_valid_contours = get_valid_contours(contours)
         logging.info(f"Walidne koordynaty - {probably_valid_contours}")
         if(probably_valid_contours):
-            corners_coordinates, height, width = get_best_contour_dimensions(probably_valid_contours)
-            logging.info(f"Wybrane koordynaty - {corners_coordinates}, h: {height}, w: {width}")
-            cropped_image = put_letter_in_square(corners_coordinates, img)
-            cv2.imwrite(f"{destination_directory}/{image_name}", cropped_image)
+            save_contours_to_file(probably_valid_contours, img, f"{destination_directory}/{image_name}")
 
+def distract_letter_from_image_where_only_one_contour_is_frame(height, width, img_height, img_width, img):
+    if(check_if_contour_is_frame(height, width, img_height, img_width)):  # contour as frame, not possible to detect contours inside
+        cropped_image = img[0:img_height - FRAME_SIZE, 0:img_width - FRAME_SIZE]  # remove frame
+        return find_contours_in_img(cropped_image)
+    else:
+        return []
+
+def check_if_contour_is_frame(height, width, img_height, img_width):
+    return True if height > int(FRAME_PROPORTION_MIN*img_height) and width > int(FRAME_PROPORTION_MIN*img_width) else False
+
+def save_contours_to_file(contours_list, img, file_name):
+    corners_coordinates, height, width = get_best_contour_dimensions(contours_list)
+    logging.info(f"Wybrane koordynaty - {corners_coordinates}, h: {height}, w: {width}")
+    cropped_image = put_letter_in_square(corners_coordinates, img)
+    cv2.imwrite(file_name, cropped_image)
 
 def check_if_cell_is_used(cell_img):
-    copy_img = copy.deepcopy(cell_img)
-    avg = np.average(copy_img[20])  # random row
-    if(avg > 70):  # black - 0, white - 255 ,try to avoid most black cause not used
-        return True
-    else:
-        return False
+    return True if np.average(cell_img[20]) > 70 else False # black - 0, white - 255, trying to avoid most black cause that cells are not used
 
 
 def divide_board_in_cells(board_filename, destination):

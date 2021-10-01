@@ -36,7 +36,6 @@ def align_images(im1, im2):
 
     height, width, _ = im2.shape
     img = cv2.warpPerspective(im1, h, (width, height))
-    cv2.imwrite(f"xdd.png", img)
     img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     img = cv2.threshold(img, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
     return img

@@ -4,7 +4,7 @@ import letter_detector
 
 CLASSIFIER_PATH = 'classifiers/final_clf.sav'
 IMG_FILE_NAME = 'resources/test.jpg'
-
+TRAINING_WORKSPACE_DIR = 'training'
 
 def collect_samples_from_boards(dir_path):
     dirs_to_check = os.listdir(dir_path)
@@ -15,12 +15,14 @@ def collect_samples_from_boards(dir_path):
         training_utils.leave_only_cells_probably_with_letter(f"{directory}/cropped_boards")
         training_utils.collect_letters_to_one_directory(f"{directory}/samples", f"{directory}/cropped_boards")
 
-# collect_samples_from_boards('training')
-# clf = training_utils.get_trained_classifier('training')
-# training_utils.save_classifier_to_file(clf)
+def recognize_letters_from_image():
+    training_utils.resize_image(2, 'resources/tests/test.jpg', IMG_FILE_NAME)
+    board = letter_detector.recognize_letters_from_image(img_path=IMG_FILE_NAME, clf_file_name=CLASSIFIER_PATH)
+    print(board)
 
-# training_utils.resize_image(2, 'xdd.png', 'xd.png')
+collect_samples_from_boards(TRAINING_WORKSPACE_DIR)
+clf = training_utils.get_trained_classifier(TRAINING_WORKSPACE_DIR)
+training_utils.save_classifier_to_file(clf, CLASSIFIER_PATH)
 
-training_utils.resize_image(2, 'resources/tests/test.jpg', IMG_FILE_NAME)
-board = letter_detector.recognize_letters_from_image(img_path=IMG_FILE_NAME, clf_file_name=CLASSIFIER_PATH)
-print(board)
+
+
