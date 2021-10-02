@@ -12,7 +12,7 @@ import pickle
 from PIL import Image
 
 BOARD_SIZE = 15
-TEST_SIZE = 0.5
+TEST_SIZE = 0.8
 
 logging.basicConfig(filename='demo.log', level=logging.DEBUG)
 

@@ -12,7 +12,7 @@ import board_detector
 MIN_CONT_HEIGHT = 53
 MAX_CONT_HEIGHT = 70
 MIN_CONT_WIDTH = 1
-MAX_CONT_WIDTH = 70
+MAX_CONT_WIDTH = 80
 EXTRA_FRAME_SIZE = 6
 CANNY_THRESHOLD_1 = 200
 CANNY_THRESHOLD_2 = 400
@@ -22,7 +22,7 @@ FINAL_SQUARE_SIZE = 12
 BOARD_SIZE = 15
 FRAME_PROPORTION_MIN = 0.75
 FRAME_SIZE = 5
-MIN_LETTER_PROBA = 0.35
+MIN_LETTER_PROBA = 0.13
 
 logging.basicConfig(filename='demo.log', level=logging.DEBUG)
 
@@ -42,7 +42,9 @@ def get_filled_board_based_on_predicted_letters(predicted, prob_predicted, lette
     board_array = init_array_for_board()
     for i, letter_file_name in enumerate(letters_file_names):
         coord_x, coord_y = get_coordinates_on_board_from_file_name(letter_file_name)
-        logging.info(f"{coord_x}_{coord_y}, prob - {list(zip(classes, prob_predicted[i]))}, pred - {predicted[i]}")
+        prob_with_classes = list(zip(classes, prob_predicted[i]))
+        prob_with_classes.sort(key=lambda tup: tup[1], reverse=True)
+        logging.info(f"{coord_x}_{coord_y}, prob - {prob_with_classes}, pred - {predicted[i]}")
         put_letter_on_board_if_valid(max(prob_predicted[i]), predicted[i], coord_x, coord_y, board_array)
     return board_array
 
@@ -258,7 +260,8 @@ def show_contours(img_path):
     edged = cv2.Canny(img, CANNY_THRESHOLD_1, CANNY_THRESHOLD_2)
     contours, _ = cv2.findContours(edged, 
     cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-    # contours = contours[0:1]
+    contours = contours[0:2]
+    print(len(contours))
 
     cv2.drawContours(img, contours, -1, (0, 255, 0), 3)
     cv2.imshow('Contours', img)
