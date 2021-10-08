@@ -160,7 +160,7 @@ Calling `collect_samples_from_boards(TRAINING_WORKSPACE_DIR)` (`TRAINING_WORKSPA
 Calling `training_utils.get_trained_classifier(TRAINING_WORKSPACE_DIR)` will make a classifier based on prepared data:
  1. First it will collect data from all `samples` directories and reformat it appropriate to **Convolutional Neural Network**. All samples are now stored as 12x12 pixels image.
  2. Each sample is being converted to 4-bit grayscale (function `convert_image_to_4_bit_array`) and stored in vector 1x144 and each sample is putted to samples vector, so finally vector Ax1x144 is created where A is number of samples. Also vector with target (letters corresponding to vector at the same index) is being created with size Ax1.
- 3. Then classifier is being initiated, train data is being generated and classifier is being tested (`TEST_SIZE` by default is 0.5, more is recomended):
+ 3. Then classifier is being initiated, train data is being generated and classifier is being tested (`TEST_SIZE` by default is 0.5):
  ```
  clf = svm.SVC(gamma=0.001, probability=True)
  X_train, _, y_train, _ = train_test_split(data, target, test_size=TEST_SIZE, shuffle=True)
