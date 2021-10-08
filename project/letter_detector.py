@@ -8,8 +8,8 @@ import pickle
 import math
 
 from numpy.lib.function_base import average
-import training_utils
-import board_detector
+from . import training_utils
+from . import board_detector
 
 MIN_CONT_HEIGHT = 53
 MAX_CONT_HEIGHT = 70

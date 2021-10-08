@@ -3,8 +3,8 @@ import numpy as np
 import os
 import logging
 from sklearn import svm, metrics
-import board_detector
-import letter_detector
+from . import board_detector
+from . import letter_detector
 from shutil import copyfile
 from sklearn.model_selection import train_test_split
 import math
