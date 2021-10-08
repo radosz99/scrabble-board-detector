@@ -3,8 +3,8 @@ import numpy as np
 import os
 import logging
 from sklearn import svm, metrics
-import board_detector
-import letter_detector
+from . import board_detector
+from . import letter_detector
 from shutil import copyfile, rmtree
 from sklearn.model_selection import train_test_split
 import math
@@ -68,7 +68,7 @@ def create_directories_if_not_exists(list_of_dirs):
         create_directory_if_not_exists(dir)
 
 def remove_directory(dir):
-    rmtree(dir)
+    rmtree(dir, ignore_errors=True)
 
 def get_boards_from_images(dir_path, dest_dir_path):
     create_directory_if_not_exists(dest_dir_path)
