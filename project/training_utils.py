@@ -68,7 +68,7 @@ def create_directories_if_not_exists(list_of_dirs):
         create_directory_if_not_exists(dir)
 
 def remove_directory(dir):
-    shutil.rmtree(path)
+    rmtree(dir)
 
 def get_boards_from_images(dir_path, dest_dir_path):
     create_directory_if_not_exists(dest_dir_path)
