@@ -1,6 +1,7 @@
 import training_utils
 import os
 import letter_detector
+import rack_detector
 
 CLASSIFIER_PATH = 'classifiers/final_clf.sav'
 IMG_FILE_NAME = 'resources/test.jpg'
@@ -18,7 +19,7 @@ def collect_samples_from_boards(dir_path):
         training_utils.collect_letters_to_one_directory(f"{directory}/samples", f"{directory}/cropped_boards")
 
 def recognize_letters_from_image():
-    training_utils.resize_image(2, 'resources/tests/test2.jpg', IMG_FILE_NAME)  # for faster calculations
+    training_utils.resize_image(2, 'resources/tests/test3.jpg', IMG_FILE_NAME)  # for faster calculations
     board = letter_detector.recognize_letters_from_image(img_path=IMG_FILE_NAME, clf_file_name=CLASSIFIER_PATH)
     print()
     print(board)
@@ -31,4 +32,6 @@ def recognize_letters_from_image():
 # recognizing
 recognize_letters_from_image()
 
+# rack_detector.find_rack_contours('resources/tests/rack2.jpg', CLASSIFIER_PATH)
+# letter_detector.save_and_show_contours('resources/tests/rack2.jpg')
 

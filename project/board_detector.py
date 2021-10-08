@@ -36,9 +36,11 @@ def align_images(im1, im2):
 
     height, width, _ = im2.shape
     img = cv2.warpPerspective(im1, h, (width, height))
+    return binarize_image(img)
+
+def binarize_image(img):
     img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    img = cv2.threshold(img, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
-    return img
+    return cv2.threshold(img, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
 
 def retrieve_board_inside(board):
     height, width = board.shape

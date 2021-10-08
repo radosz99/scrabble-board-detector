@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 import os
 import logging
-from sklearn import svm
+from sklearn import svm, metrics
 import board_detector
 import letter_detector
 from shutil import copyfile
@@ -12,7 +12,7 @@ import pickle
 from PIL import Image
 
 BOARD_SIZE = 15
-TEST_SIZE = 0.8
+TEST_SIZE = 0.5
 
 logging.basicConfig(filename='demo.log', level=logging.DEBUG)
 
@@ -20,8 +20,12 @@ def get_trained_classifier(dir_path):
     target, samples = prepare_data_for_training(dir_path)
     data = samples.reshape((len(samples), -1))  # convert from 12x12 to 1x144
     clf = svm.SVC(gamma=0.001, probability=True)
-    X_train, _, y_train, _ = train_test_split(data, target, test_size=TEST_SIZE, shuffle=True)
+    X_train, X_test, y_train, Y_test = train_test_split(data, target, test_size=TEST_SIZE, shuffle=True)
     clf.fit(X_train, y_train)
+    logging.info(f"CLF score: {clf.score(X_test, Y_test)}")
+    predicted = clf.predict(X_test)
+    logging.info(f"Classification report for classifier {clf}:\n"
+      f"{metrics.classification_report(Y_test, predicted)}\n")
     return clf
 
 def convert_image_to_4_bit_array(img_path):

@@ -5,7 +5,9 @@ import copy
 import logging
 from operator import itemgetter
 import pickle
+import math
 
+from numpy.lib.function_base import average
 import training_utils
 import board_detector
 
@@ -22,7 +24,7 @@ FINAL_SQUARE_SIZE = 12
 BOARD_SIZE = 15
 FRAME_PROPORTION_MIN = 0.75
 FRAME_SIZE = 5
-MIN_LETTER_PROBA = 0.13
+MIN_LETTER_PROBA = 0.12
 
 logging.basicConfig(filename='demo.log', level=logging.DEBUG)
 
@@ -86,7 +88,7 @@ def get_classifier_from_file(clf_file_name):
 
 
 def get_corners_coordinates(contours):  # first width second height
-    width_start, width_end, height_start, height_end = 999, 0, 999, 0
+    width_start, width_end, height_start, height_end = 99999, 0, 99999, 0
     for contour in contours:
         coord_y, coord_x = contour[0][0], contour[0][1]  # width
         if(coord_y < width_start):
@@ -131,6 +133,7 @@ def get_coordinates_of_square_with_letter_inside(corners_coordinates, img_height
     height, width = get_contour_dimensions(corners_coordinates)
     edge_length = height if height > width else width  # calculate square edge
     edge_length += EXTRA_FRAME_SIZE  # add some white space around the contour (letter)
+    # edge_length += 30  # add some white space around the contour (letter)
     mphs = (edge_length - height) / 2 if (edge_length - height) % 2 == 0 else (edge_length - height + 1) / 2  # to avoid not ints
     mphe = (edge_length - height) / 2 if (edge_length - height) % 2 == 0 else (edge_length - height - 1) / 2
     mpws = (edge_length - width) / 2 if (edge_length - width) % 2 == 0 else (edge_length - width + 1) / 2
@@ -193,6 +196,7 @@ def put_letter_in_square(corners_coordinates, img):
     start_height, end_height, start_width, end_width = get_coordinates_of_square_with_letter_inside(corners_coordinates, img_height, img_width)
     cropped_image = img[start_height:end_height, start_width:end_width]  # crop to square
     cropped_image = cv2.resize(cropped_image, dsize=(FINAL_SQUARE_SIZE, FINAL_SQUARE_SIZE), interpolation=cv2.INTER_CUBIC)  # crop to square 12x12
+    # cropped_image = cv2.resize(cropped_image, dsize=(100, 100), interpolation=cv2.INTER_CUBIC)  # crop to square 12x12
     return cropped_image
 
 
@@ -254,17 +258,23 @@ def divide_board_in_cells(board_filename, destination):
             if(check_if_cell_is_used(crop_img)):
                 cv2.imwrite(f"{destination}/{multiplier_x}_{multiplier_y}.png", crop_img)
 
+def save_binarized_image(source, destination):
+    img = cv2.imread(source)
+    img = board_detector.binarize_image(img)
+    cv2.imwrite(destination, img)
 
-def show_contours(img_path):
+def save_and_show_contours(img_path):
     img = cv2.imread(img_path)
-    edged = cv2.Canny(img, CANNY_THRESHOLD_1, CANNY_THRESHOLD_2)
-    contours, _ = cv2.findContours(edged, 
-    cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-    contours = contours[0:2]
-    print(len(contours))
-
-    cv2.drawContours(img, contours, -1, (0, 255, 0), 3)
-    cv2.imshow('Contours', img)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
-
+    contours = find_contours_in_img(img)
+    contours_list = []
+    for contour in contours:
+        contours_list.append((get_contour_parameters(contour), contour))
+    contours_list.sort(key=lambda tup: tup[0][1], reverse=True)
+    for contour in contours_list[:20]:
+        print(contour[0])
+    best_contours = [contour[1] for contour in contours_list]
+    cv2.drawContours(img, best_contours[:20], -1, (0, 255, 0), 3)
+    cv2.imwrite("img_with_contours.png", img)
+    # cv2.imshow('Contours', img)
+    # cv2.waitKey(0)
+    # cv2.destroyAllWindows()
