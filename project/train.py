@@ -26,11 +26,11 @@ def recognize_letters_from_image():
 
 # training
 # collect_samples_from_boards(TRAINING_WORKSPACE_DIR)
-# clf = training_utils.get_trained_classifier(TRAINING_WORKSPACE_DIR)
-# training_utils.save_classifier_to_file(clf, CLASSIFIER_PATH)
+clf = training_utils.get_trained_classifier(TRAINING_WORKSPACE_DIR)
+training_utils.save_classifier_to_file(clf, CLASSIFIER_PATH)
 
 # recognizing
-recognize_letters_from_image()
+# recognize_letters_from_image()
 
 # rack_detector.find_rack_contours('resources/tests/rack2.jpg', CLASSIFIER_PATH)
 # letter_detector.save_and_show_contours('resources/tests/rack2.jpg')

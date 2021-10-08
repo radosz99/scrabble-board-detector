@@ -8,8 +8,8 @@ import pickle
 import math
 
 from numpy.lib.function_base import average
-from . import training_utils
-from . import board_detector
+import training_utils
+import board_detector
 
 MIN_CONT_HEIGHT = 53
 MAX_CONT_HEIGHT = 70
@@ -56,6 +56,7 @@ def init_array_for_board():
 
 
 def prepare_output_workspace_for_detecting(output_directory):
+    training_utils.remove_directory(output_directory)
     training_utils.create_directories_if_not_exists([output_directory, f"{output_directory}/cells", f"{output_directory}/cleared"])
 
 
